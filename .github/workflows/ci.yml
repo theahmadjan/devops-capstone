@@ -5,16 +5,14 @@ on:
       - main
 jobs:
   build:
-    # Change from ubuntu-latest to self-hosted so it runs locally on your laptop
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-      # Using standard shell commands since your local machine already has Python & Docker
-      name: Run Tests
-      run: |
-        pip install -r api/requirements.txt
-        pip install pytest
-        pytest api/tests
+      - name: Run Tests
+        run: |
+          pip install -r api/requirements.txt
+          pip install pytest
+          pytest api/tests
       - name: Login DockerHub
         uses: docker/login-action@v3
         with:
@@ -28,5 +26,4 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-api:${{ github.sha }}
       - name: Deploy to Minikube Cluster
         run: |
-          # Since it runs on your laptop, kubectl already has direct access!
           kubectl set image deployment/flask-api flask-api=${{ secrets.DOCKERHUB_USERNAME }}/flask-api:${{ github.sha }}
