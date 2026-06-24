@@ -1,0 +1,35 @@
+# worker/worker.py has no HTTP server (just an infinite loop writing
+# heartbeats to Mongo) — so no Service, and no HTTP probes. We use a
+# simple process-alive check via the container restarting if it crashes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+        - name: worker
+          image: worker:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-credentials
+                  key: mongo-uri
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"

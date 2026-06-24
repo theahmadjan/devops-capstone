@@ -1,0 +1,41 @@
+services:
+  # MongoDB database
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # Flask API
+  api:
+    build: ./api
+    container_name: flask-api
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/appdb
+    depends_on:
+      - mongo
+
+  # Background worker
+  worker:
+    build: ./worker
+    container_name: worker
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/appdb
+    depends_on:
+      - mongo
+
+  # Frontend — simple HTML UI served by Nginx
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  mongo-data:

@@ -1,0 +1,71 @@
+# Confirmed against api/app.py: Flask runs on port 5000, health check is GET /health
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-api
+  namespace: production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-api
+  template:
+    metadata:
+      labels:
+        app: flask-api
+    spec:
+      containers:
+        - name: flask-api
+          image: flask-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-credentials
+                  key: mongo-uri
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: flask-config
+                  key: LOG_LEVEL
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: flask-config
+                  key: APP_ENV
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-api-service
+  namespace: production
+spec:
+  selector:
+    app: flask-api
+  ports:
+    - port: 80
+      targetPort: 5000

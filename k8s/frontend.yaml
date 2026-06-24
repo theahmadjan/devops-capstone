@@ -1,0 +1,50 @@
+# ⚠️ BLOCKED until Person A finishes frontend/index.html AND adds a
+# frontend/Dockerfile. As of now (checked directly in the repo):
+#   - frontend/index.html exists but is EMPTY (0 bytes)
+#   - frontend/Dockerfile does NOT exist
+# This file assumes the standard pattern from the project plan:
+#   FROM nginx:alpine
+#   COPY index.html /usr/share/nginx/html/index.html
+# nginx:alpine defaults to port 80 — confirm this still holds once
+# Person A actually writes the Dockerfile, then apply this file.
+# DO NOT kubectl apply this until frontend:latest successfully builds.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "150m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: production
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
