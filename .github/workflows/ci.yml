@@ -29,3 +29,10 @@ jobs:
           context: ./api
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/flask-api:${{ github.sha }}
+      - name: Deploy to Minikube Cluster
+        run: |
+          # Recreate your cluster environment credentials inside the runner
+          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
+          export KUBECONFIG=kubeconfig
+          # Force the deployment to use the newly created Docker Hub image tag
+          kubectl set image deployment/flask-api flask-api=${{ secrets.DOCKERHUB_USERNAME }}/flask-api:${{ github.sha }}
